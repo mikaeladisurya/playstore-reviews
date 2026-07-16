@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Review Wire — Play Store Dispatch</title>
+<style>
+  :root{
+    --paper:#FAF8F3;
+    --paper-dim:#F1EEE6;
+    --ink:#181a1c;
+    --ink-soft:#4a4d52;
+    --line:#d8d3c6;
+    --mustard:#c8932a;
+    --mustard-deep:#9c6f1c;
+    --green:#3f6b4a;
+    --red:#a13f33;
+    --serif:'Iowan Old Style','Palatino Linotype',Georgia,'Times New Roman',serif;
+    --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    --mono:'IBM Plex Mono','SF Mono',Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--serif);
+    line-height:1.5;
+  }
+  ::selection{background:var(--mustard);color:#fff;}
+
+  /* ---------- Masthead ---------- */
+  .masthead{
+    border-bottom:3px double var(--ink);
+    padding:22px 28px 14px;
+    text-align:center;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,0,0,0.025) 40px);
+  }
+  .masthead .kicker{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--mustard-deep);
+  }
+  .masthead h1{
+    font-family:var(--sans);
+    font-weight:800;
+    letter-spacing:-0.02em;
+    font-size:clamp(28px,5vw,46px);
+    margin:6px 0 4px;
+  }
+  .masthead h1 span{ color: var(--mustard); }
+  .masthead .sub{
+    font-style:italic;
+    color:var(--ink-soft);
+    font-size:14px;
+  }
+  .rule{ border:none; border-top:1px solid var(--line); margin:0; }
+
+  /* ---------- Layout ---------- */
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px;
+    display:grid;
+    grid-template-columns: 340px 1fr;
+    gap:32px;
+  }
+  @media (max-width: 880px){
+    .wrap{ grid-template-columns: 1fr; }
+  }
+
+  .section-label{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    border-bottom:1px solid var(--ink);
+    padding-bottom:6px;
+    margin:0 0 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+  }
+
+  /* ---------- Control column ---------- */
+  .control-card{
+    background:var(--paper-dim);
+    border:1px solid var(--line);
+    padding:20px;
+    margin-bottom:24px;
+  }
+  label{
+    display:block;
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:14px 0 6px;
+  }
+  label:first-of-type{ margin-top:0; }
+  input[type=text], input[type=number], select{
+    width:100%;
+    font-family:var(--serif);
+    font-size:15px;
+    padding:9px 10px;
+    border:1px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+  }
+  input:focus, select:focus, button:focus{
+    outline:2px solid var(--mustard);
+    outline-offset:1px;
+  }
+  .hint{ font-family:var(--mono); font-size:10px; color:#8a8d92; margin-top:4px; }
+
+  .star-grid{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .star-chip{
+    border:1px solid var(--ink);
+    background:#fff;
+    padding:7px 10px;
+    font-family:var(--mono);
+    font-size:13px;
+    cursor:pointer;
+    user-select:none;
+    transition:background .12s, color .12s;
+  }
+  .star-chip.active{
+    background:var(--ink);
+    color:var(--mustard);
+    border-color:var(--ink);
+  }
+
+  .app-preview{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:12px;
+    padding:10px;
+    border:1px dashed var(--line);
+    min-height:48px;
+  }
+  .app-preview img{ width:40px; height:40px; border-radius:9px; flex-shrink:0; object-fit:cover; }
+  .app-preview .name{ font-family:var(--sans); font-weight:700; font-size:13.5px; }
+  .app-preview .dev{ font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); }
+  .app-preview .empty{ font-family:var(--mono); font-size:11px; color:#a7a9ad; }
+
+  button.primary{
+    width:100%;
+    margin-top:18px;
+    padding:13px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    font-family:var(--sans);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:.03em;
+    cursor:pointer;
+    transition:background .15s;
+  }
+  button.primary:hover{ background:var(--mustard-deep); }
+  button.primary:disabled{ background:#b9b6ab; cursor:wait; }
+
+  .status-line{
+    font-family:var(--mono);
+    font-size:11.5px;
+    margin-top:10px;
+    min-height:14px;
+    color:var(--ink-soft);
+  }
+  .status-line.err{ color:var(--red); }
+  .status-line.ok{ color:var(--green); }
+
+  /* ---------- Archive list ---------- */
+  .archive-item{
+    border-bottom:1px solid var(--line);
+    padding:10px 2px;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    align-items:center;
+  }
+  .archive-item:hover{ background:rgba(200,147,42,0.08); }
+  .archive-item.active{ background:rgba(200,147,42,0.16); }
+  .archive-item .meta{ font-size:13px; }
+  .archive-item .meta .app{ font-family:var(--sans); font-weight:700; }
+  .archive-item .meta .sub{ font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); }
+  .archive-item .del{
+    font-family:var(--mono); font-size:14px; color:var(--ink-soft);
+    background:none; border:none; cursor:pointer; padding:4px;
+  }
+  .archive-item .del:hover{ color:var(--red); }
+  .archive-empty{ font-family:var(--mono); font-size:12px; color:#a7a9ad; padding:8px 2px; }
+
+  /* ---------- Main column ---------- */
+  .headline-block{
+    margin-bottom:22px;
+  }
+  .headline-block h2{
+    font-family:var(--sans);
+    font-weight:800;
+    font-size:clamp(22px,3vw,30px);
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  .headline-block .deck{
+    font-style:italic;
+    color:var(--ink-soft);
+    font-size:14.5px;
+  }
+
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--ink);
+    border:1px solid var(--ink);
+    margin:18px 0;
+  }
+  .stat-cell{
+    background:var(--paper);
+    padding:14px 12px;
+    text-align:center;
+  }
+  .stat-cell .num{ font-family:var(--mono); font-size:24px; font-weight:700; }
+  .stat-cell .lbl{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); margin-top:3px; }
+
+  .dist-bars{ margin:18px 0 24px; }
+  .dist-row{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .dist-row .star-lbl{ font-family:var(--mono); font-size:12px; width:34px; flex-shrink:0; }
+  .dist-row .bar-track{ flex:1; height:14px; background:var(--paper-dim); border:1px solid var(--line); position:relative; }
+  .dist-row .bar-fill{ height:100%; background:var(--mustard); }
+  .dist-row .count{ font-family:var(--mono); font-size:11px; width:42px; text-align:right; flex-shrink:0; color:var(--ink-soft); }
+
+  .toolbar{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-bottom:16px;
+  }
+  .toolbar input[type=text]{ flex:1; min-width:160px; }
+  .toolbar select{ width:auto; }
+  .toolbar button.ghost{
+    border:1px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:11.5px;
+    padding:9px 12px;
+    cursor:pointer;
+  }
+  .toolbar button.ghost:hover{ background:var(--ink); color:var(--paper); }
+
+  .review-card{
+    border-top:1px solid var(--line);
+    padding:16px 0;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:14px;
+  }
+  .review-card img{ width:38px; height:38px; border-radius:50%; object-fit:cover; background:var(--paper-dim); }
+  .review-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:4px;
+  }
+  .review-head .who{ font-family:var(--sans); font-weight:700; font-size:14px; }
+  .review-head .when{ font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); }
+  .stars{ color:var(--mustard); letter-spacing:1px; font-size:13px; }
+  .review-body{ font-size:15px; }
+  .review-foot{ font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); margin-top:6px; display:flex; gap:14px; flex-wrap:wrap; }
+  .reply-box{
+    margin-top:10px;
+    padding:10px 12px;
+    background:var(--paper-dim);
+    border-left:3px solid var(--mustard);
+    font-size:13px;
+  }
+  .reply-box .tag{ font-family:var(--mono); font-size:10px; text-transform:uppercase; color:var(--mustard-deep); display:block; margin-bottom:3px; }
+
+  .empty-state{
+    padding:60px 20px;
+    text-align:center;
+    color:var(--ink-soft);
+  }
+  .empty-state .glyph{ font-size:34px; color:var(--mustard); margin-bottom:10px; }
+  .empty-state .t1{ font-family:var(--sans); font-weight:700; font-size:16px; color:var(--ink); }
+  .empty-state .t2{ font-size:13.5px; margin-top:4px; }
+
+  footer{
+    text-align:center;
+    font-family:var(--mono);
+    font-size:10.5px;
+    color:var(--ink-soft);
+    padding:24px;
+    border-top:1px solid var(--line);
+    margin-top:20px;
+  }
+
+  .spinner{
+    display:inline-block; width:11px; height:11px;
+    border:2px solid var(--paper); border-top-color:var(--mustard);
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+    vertical-align:-1px; margin-right:6px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="kicker">Vol. 1 · Independent Field Edition</div>
+  <h1>The Review <span>Wire</span></h1>
+  <div class="sub">Dispatches pulled straight from the Play Store, sorted, starred &amp; filed.</div>
+</div>
+<hr class="rule" />
+
+<div class="wrap">
+
+  <!-- ============ LEFT: CONTROLS ============ -->
+  <div>
+    <div class="control-card">
+      <div class="section-label">Assignment</div>
+
+      <label for="appId">App package ID or Play Store URL</label>
+      <input type="text" id="appId" value="https://play.google.com/store/apps/details?id=com.icon.pln123&hl=id" placeholder="com.example.app or full URL" />
+      <div class="hint">Switch to any app by pasting its package ID or store link.</div>
+
+      <div class="app-preview" id="appPreview">
+        <div class="empty">No app looked up yet — paste an ID and press Scrape.</div>
+      </div>
+
+      <label>Star rating(s) to collect</label>
+      <div class="star-grid" id="starGrid">
+        <div class="star-chip" data-star="1">★1</div>
+        <div class="star-chip" data-star="2">★2</div>
+        <div class="star-chip" data-star="3">★3</div>
+        <div class="star-chip" data-star="4">★4</div>
+        <div class="star-chip" data-star="5">★5</div>
+      </div>
+      <div class="hint">Leave all unselected to pull reviews of every rating.</div>
+
+      <label for="count">How many reviews</label>
+      <input type="number" id="count" value="100" min="1" max="5000" />
+
+      <label for="sort">Sort order</label>
+      <select id="sort">
+        <option value="newest">Newest first</option>
+        <option value="rating">By rating</option>
+        <option value="relevance">Most relevant</option>
+      </select>
+
+      <label for="lang">Language / Country</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="lang" value="id" style="width:50%" />
+        <input type="text" id="country" value="id" style="width:50%" />
+      </div>
+
+      <button class="primary" id="scrapeBtn">Run the scrape</button>
+      <div class="status-line" id="status"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Filed Dispatches <span id="archiveCount"></span></div>
+      <div id="archiveList"><div class="archive-empty">No saved reviews yet.</div></div>
+    </div>
+  </div>
+
+  <!-- ============ RIGHT: RESULTS ============ -->
+  <div>
+    <div id="resultsArea">
+      <div class="empty-state">
+        <div class="glyph">☆ ☆ ☆</div>
+        <div class="t1">Nothing on the desk yet</div>
+        <div class="t2">Run a scrape, or open a filed dispatch from the left, to see reviews here.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Built on google-play-scraper · Data saved locally as JSON · Not affiliated with Google</footer>
+
+<script>
+const state = { stars: new Set(), current: null, archive: [] };
+
+const $ = sel => document.querySelector(sel);
+const statusEl = $('#status');
+
+function setStatus(msg, kind){
+  statusEl.textContent = msg || '';
+  statusEl.className = 'status-line' + (kind ? ' ' + kind : '');
+}
+
+// ---- star chip toggles ----
+document.querySelectorAll('.star-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    const v = parseInt(chip.dataset.star,10);
+    if(state.stars.has(v)){ state.stars.delete(v); chip.classList.remove('active'); }
+    else { state.stars.add(v); chip.classList.add('active'); }
+  });
+});
+
+// ---- app preview lookup (debounced-ish, fires on blur) ----
+$('#appId').addEventListener('blur', loadAppPreview);
+async function loadAppPreview(){
+  const raw = $('#appId').value.trim();
+  if(!raw) return;
+  const lang = $('#lang').value || 'en';
+  const country = $('#country').value || 'us';
+  try{
+    const res = await fetch(`/api/app-info?app_id=${encodeURIComponent(raw)}&lang=${lang}&country=${country}`);
+    const data = await res.json();
+    const box = $('#appPreview');
+    if(data.error){
+      box.innerHTML = `<div class="empty">Could not look up that app yet — it'll still attempt to scrape.</div>`;
+      return;
+    }
+    box.innerHTML = `
+      <img src="${data.icon}" alt="">
+      <div>
+        <div class="name">${data.title}</div>
+        <div class="dev">${data.developer} · ★ ${data.score?.toFixed?.(2) ?? '—'} · ${data.ratings?.toLocaleString?.() ?? '—'} ratings</div>
+      </div>`;
+  }catch(e){ /* silent — preview is a nicety, not required */ }
+}
+
+// ---- run scrape ----
+$('#scrapeBtn').addEventListener('click', runScrape);
+async function runScrape(){
+  const app_id = $('#appId').value.trim();
+  if(!app_id){ setStatus('Enter an app ID or URL first.', 'err'); return; }
+  const count = parseInt($('#count').value,10) || 100;
+  const payload = {
+    app_id,
+    count,
+    scores: Array.from(state.stars),
+    sort: $('#sort').value,
+    lang: $('#lang').value || 'id',
+    country: $('#country').value || 'id',
+  };
+  const btn = $('#scrapeBtn');
+  btn.disabled = true;
+  setStatus('Wire is running — pulling reviews from the stand…');
+  try{
+    const res = await fetch('/api/scrape', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.error){ setStatus('Error: ' + data.error, 'err'); return; }
+    setStatus(`Filed ${data.stats.total} reviews → ${data.meta.filename}`, 'ok');
+    state.current = data;
+    renderResults(data);
+    loadArchive();
+  }catch(e){
+    setStatus('Network error talking to the local server.', 'err');
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// ---- archive ----
+async function loadArchive(){
+  try{
+    const res = await fetch('/api/saved');
+    const list = await res.json();
+    state.archive = list;
+    const box = $('#archiveList');
+    $('#archiveCount').textContent = list.length ? `(${list.length})` : '';
+    if(!list.length){ box.innerHTML = '<div class="archive-empty">No saved reviews yet.</div>'; return; }
+    box.innerHTML = '';
+    list.forEach(item=>{
+      const row = document.createElement('div');
+      row.className = 'archive-item';
+      const starsTag = item.meta.starsFilter === 'all' ? 'all stars' : '★' + (Array.isArray(item.meta.starsFilter) ? item.meta.starsFilter.join(',★') : item.meta.starsFilter);
+      row.innerHTML = `
+        <div class="meta">
+          <div class="app">${item.meta.appId}</div>
+          <div class="sub">${item.stats.total} reviews · ${starsTag} · avg ${item.stats.average ?? '—'} · ${new Date(item.meta.scrapedAt).toLocaleString()}</div>
+        </div>
+        <button class="del" title="Delete this file">✕</button>`;
+      row.addEventListener('click', (e)=>{
+        if(e.target.classList.contains('del')) return;
+        openSaved(item.filename, row);
+      });
+      row.querySelector('.del').addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        if(!confirm('Delete this saved dispatch?')) return;
+        await fetch('/api/saved/' + encodeURIComponent(item.filename), { method:'DELETE' });
+        loadArchive();
+      });
+      box.appendChild(row);
+    });
+  }catch(e){
+    $('#archiveList').innerHTML = '<div class="archive-empty">Could not reach local server.</div>';
+  }
+}
+
+async function openSaved(filename, rowEl){
+  document.querySelectorAll('.archive-item').forEach(r=>r.classList.remove('active'));
+  if(rowEl) rowEl.classList.add('active');
+  const res = await fetch('/api/saved/' + encodeURIComponent(filename));
+  const data = await res.json();
+  state.current = data;
+  renderResults(data);
+}
+
+// ---- rendering ----
+let filterText = '';
+let filterStar = '';
+
+function renderResults(data){
+  const area = $('#resultsArea');
+  const { meta, stats, reviews: rv } = data;
+
+  const distMax = Math.max(1, ...Object.values(stats.distribution));
+  const distHtml = [5,4,3,2,1].map(s=>{
+    const c = stats.distribution[s] || 0;
+    const pct = Math.round((c/distMax)*100);
+    return `<div class="dist-row">
+      <div class="star-lbl">★${s}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="count">${c}</div>
+    </div>`;
+  }).join('');
+
+  area.innerHTML = `
+    <div class="headline-block">
+      <h2>${meta.appId}</h2>
+      <div class="deck">${stats.total} reviews filed · sorted ${meta.sort} · ${meta.lang}/${meta.country} · pulled ${new Date(meta.scrapedAt).toLocaleString()}</div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-cell"><div class="num">${stats.total}</div><div class="lbl">Reviews</div></div>
+      <div class="stat-cell"><div class="num">${stats.average ?? '—'}</div><div class="lbl">Avg. rating</div></div>
+      <div class="stat-cell"><div class="num">${stats.distribution[5] || 0}</div><div class="lbl">5-star count</div></div>
+    </div>
+
+    <div class="dist-bars">${distHtml}</div>
+
+    <div class="toolbar">
+      <input type="text" id="searchBox" placeholder="Search review text or username…" />
+      <select id="starFilter">
+        <option value="">All stars</option>
+        <option value="5">★5 only</option>
+        <option value="4">★4 only</option>
+        <option value="3">★3 only</option>
+        <option value="2">★2 only</option>
+        <option value="1">★1 only</option>
+      </select>
+      <button class="ghost" id="downloadBtn">Download JSON</button>
+    </div>
+
+    <div id="reviewList"></div>
+  `;
+
+  $('#searchBox').addEventListener('input', (e)=>{ filterText = e.target.value.toLowerCase(); renderList(rv); });
+  $('#starFilter').addEventListener('change', (e)=>{ filterStar = e.target.value; renderList(rv); });
+  $('#downloadBtn').addEventListener('click', ()=> downloadJSON(data));
+
+  renderList(rv);
+}
+
+function renderList(rv){
+  const list = $('#reviewList');
+  const filtered = rv.filter(r=>{
+    if(filterStar && String(r.score) !== filterStar) return false;
+    if(filterText){
+      const hay = (r.content||'').toLowerCase() + ' ' + (r.userName||'').toLowerCase();
+      if(!hay.includes(filterText)) return false;
+    }
+    return true;
+  });
+
+  if(!filtered.length){
+    list.innerHTML = `<div class="empty-state"><div class="glyph">☐</div><div class="t1">No matching reviews</div><div class="t2">Try clearing the search or star filter.</div></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r=>{
+    const stars = '★'.repeat(r.score||0) + '☆'.repeat(5-(r.score||0));
+    const reply = r.replyContent ? `<div class="reply-box"><span class="tag">Developer reply</span>${escapeHtml(r.replyContent)}</div>` : '';
+    const img = r.userImage || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="38" height="38"><rect width="38" height="38" fill="%23f1eee6"/></svg>';
+    return `<div class="review-card">
+      <img src="${img}" alt="">
+      <div>
+        <div class="review-head">
+          <span class="who">${escapeHtml(r.userName || 'Anonymous')}</span>
+          <span class="when">${r.at ? new Date(r.at).toLocaleDateString() : ''}</span>
+        </div>
+        <div class="stars">${stars}</div>
+        <div class="review-body">${escapeHtml(r.content || '')}</div>
+        <div class="review-foot">
+          <span>👍 ${r.thumbsUpCount ?? 0}</span>
+          ${r.appVersion ? `<span>v${r.appVersion}</span>` : ''}
+        </div>
+        ${reply}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function downloadJSON(data){
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = data.meta.filename || 'reviews.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// init
+loadArchive();
+loadAppPreview();
+</script>
+</body>
+</html>

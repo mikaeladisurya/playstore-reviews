@@ -1,0 +1,2 @@
+Flask==3.0.3
+google-play-scraper==1.2.6
