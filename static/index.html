@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -176,6 +176,7 @@
     margin-top:10px;
     min-height:14px;
     color:var(--ink-soft);
+    overflow-wrap:anywhere;
   }
   .status-line.err{ color:var(--red); }
   .status-line.ok{ color:var(--green); }
@@ -191,13 +192,13 @@
     align-items:center;
   }
   .archive-item:hover{ background:rgba(200,147,42,0.08); }
-  .archive-item.active{ background:rgba(200,147,42,0.16); }
-  .archive-item .meta{ font-size:13px; }
-  .archive-item .meta .app{ font-family:var(--sans); font-weight:700; }
+  .archive-item.active{ background:rgba(200,147,42,0.16); box-shadow:inset 3px 0 0 var(--mustard); }
+  .archive-item .meta{ font-size:13px; min-width:0; }
+  .archive-item .meta .app{ font-family:var(--sans); font-weight:700; overflow-wrap:anywhere; }
   .archive-item .meta .sub{ font-family:var(--mono); font-size:10.5px; color:var(--ink-soft); }
   .archive-item .del{
     font-family:var(--mono); font-size:14px; color:var(--ink-soft);
-    background:none; border:none; cursor:pointer; padding:4px;
+    background:none; border:none; cursor:pointer; padding:4px; flex-shrink:0;
   }
   .archive-item .del:hover{ color:var(--red); }
   .archive-empty{ font-family:var(--mono); font-size:12px; color:#a7a9ad; padding:8px 2px; }
@@ -212,6 +213,7 @@
     font-size:clamp(22px,3vw,30px);
     margin:0 0 4px;
     letter-spacing:-0.01em;
+    overflow-wrap:anywhere;
   }
   .headline-block .deck{
     font-style:italic;
@@ -240,7 +242,7 @@
   .dist-row .star-lbl{ font-family:var(--mono); font-size:12px; width:34px; flex-shrink:0; }
   .dist-row .bar-track{ flex:1; height:14px; background:var(--paper-dim); border:1px solid var(--line); position:relative; }
   .dist-row .bar-fill{ height:100%; background:var(--mustard); }
-  .dist-row .count{ font-family:var(--mono); font-size:11px; width:42px; text-align:right; flex-shrink:0; color:var(--ink-soft); }
+  .dist-row .count{ font-family:var(--mono); font-size:11px; width:74px; text-align:right; flex-shrink:0; color:var(--ink-soft); }
 
   .toolbar{
     display:flex;
@@ -259,8 +261,33 @@
     font-size:11.5px;
     padding:9px 12px;
     cursor:pointer;
+    white-space:nowrap;
   }
   .toolbar button.ghost:hover{ background:var(--ink); color:var(--paper); }
+  .toolbar button.ghost:disabled{ opacity:.45; cursor:not-allowed; background:transparent; color:var(--ink); }
+  @media (max-width: 700px){
+    .toolbar{ flex-direction:column; align-items:stretch; }
+    .toolbar select, .toolbar button.ghost{ width:100%; }
+    .stat-cell .num{ font-size:20px; }
+  }
+
+  .filter-count{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-soft);
+    margin:-6px 0 10px;
+  }
+
+  .warn-box{
+    background:#fdf6e3;
+    border-left:3px solid var(--mustard);
+    padding:10px 14px;
+    margin:14px 0;
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--mustard-deep);
+  }
+  .warn-box ul{ margin:4px 0 0; padding-left:18px; }
 
   .review-card{
     border-top:1px solid var(--line);
@@ -301,6 +328,19 @@
   .empty-state .t1{ font-family:var(--sans); font-weight:700; font-size:16px; color:var(--ink); }
   .empty-state .t2{ font-size:13.5px; margin-top:4px; }
 
+  /* ---------- Skeleton ---------- */
+  .skeleton{ padding-top:16px; }
+  .sk-line{
+    height:13px;
+    background:linear-gradient(90deg, var(--paper-dim) 25%, #e6e2d7 37%, var(--paper-dim) 63%);
+    background-size:400% 100%;
+    animation:shimmer 1.3s ease-in-out infinite;
+    margin-bottom:10px;
+  }
+  .sk-line.w40{ width:40%; } .sk-line.w70{ width:70%; } .sk-line.w90{ width:90%; }
+  .sk-line.tall{ height:56px; }
+  @keyframes shimmer{ 0%{background-position:100% 0;} 100%{background-position:-100% 0;} }
+
   footer{
     text-align:center;
     font-family:var(--mono);
@@ -318,6 +358,25 @@
     animation:spin .7s linear infinite;
     vertical-align:-1px; margin-right:6px;
   }
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--mono);
+    font-size:12px;
+    padding:11px 16px;
+    max-width:320px;
+    opacity:0;
+    transform:translateY(8px);
+    transition:opacity .18s, transform .18s;
+    pointer-events:none;
+    z-index:10;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .toast.err{ background:var(--red); }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 </style>
 </head>
@@ -335,49 +394,49 @@
   <!-- ============ LEFT: CONTROLS ============ -->
   <div>
     <div class="control-card">
-      <div class="section-label">Assignment</div>
+      <div class="section-label">Penugasan</div>
 
-      <label for="appId">App package ID or Play Store URL</label>
-      <input type="text" id="appId" value="https://play.google.com/store/apps/details?id=com.icon.pln123&hl=id" placeholder="com.example.app or full URL" />
-      <div class="hint">Switch to any app by pasting its package ID or store link.</div>
+      <label for="appId">Package ID atau URL Play Store</label>
+      <input type="text" id="appId" value="https://play.google.com/store/apps/details?id=com.icon.pln123&hl=id" placeholder="com.example.app atau URL lengkap" />
+      <div class="hint">Bisa ganti app apa pun dengan menempel package ID atau tautan store.</div>
 
       <div class="app-preview" id="appPreview">
-        <div class="empty">No app looked up yet — paste an ID and press Scrape.</div>
+        <div class="empty">Belum ada app yang dicek — tempel ID lalu jalankan scrape.</div>
       </div>
 
-      <label>Star rating(s) to collect</label>
-      <div class="star-grid" id="starGrid">
-        <div class="star-chip" data-star="1">★1</div>
-        <div class="star-chip" data-star="2">★2</div>
-        <div class="star-chip" data-star="3">★3</div>
-        <div class="star-chip" data-star="4">★4</div>
-        <div class="star-chip" data-star="5">★5</div>
+      <label>Bintang yang diambil</label>
+      <div class="star-grid" id="starGrid" role="group" aria-label="Filter bintang">
+        <div class="star-chip" data-star="1" role="button" tabindex="0" aria-pressed="false">★1</div>
+        <div class="star-chip" data-star="2" role="button" tabindex="0" aria-pressed="false">★2</div>
+        <div class="star-chip" data-star="3" role="button" tabindex="0" aria-pressed="false">★3</div>
+        <div class="star-chip" data-star="4" role="button" tabindex="0" aria-pressed="false">★4</div>
+        <div class="star-chip" data-star="5" role="button" tabindex="0" aria-pressed="false">★5</div>
       </div>
-      <div class="hint">Leave all unselected to pull reviews of every rating.</div>
+      <div class="hint">Kosongkan semua untuk mengambil seluruh rating.</div>
 
-      <label for="count">How many reviews</label>
+      <label for="count">Jumlah review</label>
       <input type="number" id="count" value="100" min="1" max="5000" />
 
-      <label for="sort">Sort order</label>
+      <label for="sort">Urutan</label>
       <select id="sort">
-        <option value="newest">Newest first</option>
-        <option value="rating">By rating</option>
-        <option value="relevance">Most relevant</option>
+        <option value="newest">Terbaru dulu</option>
+        <option value="rating">Berdasarkan rating</option>
+        <option value="relevance">Paling relevan</option>
       </select>
 
-      <label for="lang">Language / Country</label>
+      <label for="lang">Bahasa / Negara</label>
       <div style="display:flex; gap:8px;">
-        <input type="text" id="lang" value="id" style="width:50%" />
-        <input type="text" id="country" value="id" style="width:50%" />
+        <input type="text" id="lang" value="id" style="width:50%" aria-label="Bahasa" />
+        <input type="text" id="country" value="id" style="width:50%" aria-label="Negara" />
       </div>
 
-      <button class="primary" id="scrapeBtn">Run the scrape</button>
-      <div class="status-line" id="status"></div>
+      <button class="primary" id="scrapeBtn">Jalankan scrape</button>
+      <div class="status-line" id="status" role="status" aria-live="polite"></div>
     </div>
 
     <div>
-      <div class="section-label">Filed Dispatches <span id="archiveCount"></span></div>
-      <div id="archiveList"><div class="archive-empty">No saved reviews yet.</div></div>
+      <div class="section-label">Arsip <span id="archiveCount"></span></div>
+      <div id="archiveList"><div class="archive-empty">Belum ada hasil tersimpan.</div></div>
     </div>
   </div>
 
@@ -386,18 +445,20 @@
     <div id="resultsArea">
       <div class="empty-state">
         <div class="glyph">☆ ☆ ☆</div>
-        <div class="t1">Nothing on the desk yet</div>
-        <div class="t2">Run a scrape, or open a filed dispatch from the left, to see reviews here.</div>
+        <div class="t1">Meja masih kosong</div>
+        <div class="t2">Jalankan scrape, atau buka arsip di panel kiri, untuk melihat review di sini.</div>
       </div>
     </div>
   </div>
 
 </div>
 
-<footer>Built on google-play-scraper · Data saved locally as JSON · Not affiliated with Google</footer>
+<footer>Dibangun dengan google-play-scraper · Data disimpan lokal sebagai JSON · Tidak berafiliasi dengan Google</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const state = { stars: new Set(), current: null, archive: [] };
+const CSV_COLUMNS = ['reviewId','userName','score','thumbsUpCount','at','appVersion','content','replyContent','repliedAt'];
+const state = { stars: new Set(), current: null, archive: [], filtered: [], filterText: '', filterStar: '', openFile: null, loading: false };
 
 const $ = sel => document.querySelector(sel);
 const statusEl = $('#status');
@@ -407,44 +468,95 @@ function setStatus(msg, kind){
   statusEl.className = 'status-line' + (kind ? ' ' + kind : '');
 }
 
-// ---- star chip toggles ----
+let toastTimer = null;
+function toast(msg, kind){
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (kind === 'err' ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.className = 'toast'; }, 4000);
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+// ---- star chips ----
 document.querySelectorAll('.star-chip').forEach(chip=>{
-  chip.addEventListener('click', ()=>{
+  const toggle = ()=>{
     const v = parseInt(chip.dataset.star,10);
-    if(state.stars.has(v)){ state.stars.delete(v); chip.classList.remove('active'); }
-    else { state.stars.add(v); chip.classList.add('active'); }
+    if(state.stars.has(v)){ state.stars.delete(v); chip.classList.remove('active'); chip.setAttribute('aria-pressed','false'); }
+    else { state.stars.add(v); chip.classList.add('active'); chip.setAttribute('aria-pressed','true'); }
+  };
+  chip.addEventListener('click', toggle);
+  chip.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(); }
   });
 });
 
-// ---- app preview lookup (debounced-ish, fires on blur) ----
+// ---- app preview lookup (debounced on typing) ----
+let previewTimer = null;
+let previewSeq = 0;
+$('#appId').addEventListener('input', ()=>{
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(loadAppPreview, 600);
+});
 $('#appId').addEventListener('blur', loadAppPreview);
+$('#appId').addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); runScrape(); }
+});
+
 async function loadAppPreview(){
   const raw = $('#appId').value.trim();
   if(!raw) return;
-  const lang = $('#lang').value || 'en';
-  const country = $('#country').value || 'us';
+  const lang = $('#lang').value || 'id';
+  const country = $('#country').value || 'id';
+  const seq = ++previewSeq;
+  const box = $('#appPreview');
+  box.innerHTML = '<div class="empty">Mencari app…</div>';
   try{
-    const res = await fetch(`/api/app-info?app_id=${encodeURIComponent(raw)}&lang=${lang}&country=${country}`);
+    const res = await fetch(`/api/app-info?app_id=${encodeURIComponent(raw)}&lang=${encodeURIComponent(lang)}&country=${encodeURIComponent(country)}`);
     const data = await res.json();
-    const box = $('#appPreview');
+    if(seq !== previewSeq) return; // a newer lookup already started
     if(data.error){
-      box.innerHTML = `<div class="empty">Could not look up that app yet — it'll still attempt to scrape.</div>`;
+      box.innerHTML = `<div class="empty">${escapeHtml(data.error)}</div>`;
       return;
     }
+    const score = typeof data.score === 'number' ? data.score.toFixed(2) : '—';
+    const ratings = typeof data.ratings === 'number' ? data.ratings.toLocaleString('id-ID') : '—';
     box.innerHTML = `
-      <img src="${data.icon}" alt="">
+      ${data.icon ? `<img src="${escapeHtml(data.icon)}" alt="">` : ''}
       <div>
-        <div class="name">${data.title}</div>
-        <div class="dev">${data.developer} · ★ ${data.score?.toFixed?.(2) ?? '—'} · ${data.ratings?.toLocaleString?.() ?? '—'} ratings</div>
+        <div class="name">${escapeHtml(data.title)}</div>
+        <div class="dev">${escapeHtml(data.developer)} · ★ ${score} · ${ratings} rating</div>
       </div>`;
-  }catch(e){ /* silent — preview is a nicety, not required */ }
+  }catch(e){
+    if(seq === previewSeq) box.innerHTML = '<div class="empty">Gagal menghubungi server lokal.</div>';
+  }
 }
 
 // ---- run scrape ----
 $('#scrapeBtn').addEventListener('click', runScrape);
+
+function showSkeleton(){
+  $('#resultsArea').innerHTML = `
+    <div class="skeleton">
+      <div class="sk-line w40"></div>
+      <div class="sk-line w70"></div>
+      <div class="sk-line tall"></div>
+      <div class="sk-line w90"></div>
+      <div class="sk-line w90"></div>
+      <div class="sk-line w70"></div>
+    </div>`;
+}
+
 async function runScrape(){
+  if(state.loading) return;
   const app_id = $('#appId').value.trim();
-  if(!app_id){ setStatus('Enter an app ID or URL first.', 'err'); return; }
+  if(!app_id){ setStatus('Isi package ID atau URL dulu.', 'err'); return; }
+
   const count = parseInt($('#count').value,10) || 100;
   const payload = {
     app_id,
@@ -454,9 +566,16 @@ async function runScrape(){
     lang: $('#lang').value || 'id',
     country: $('#country').value || 'id',
   };
+
   const btn = $('#scrapeBtn');
+  state.loading = true;
   btn.disabled = true;
-  setStatus('Wire is running — pulling reviews from the stand…');
+  btn.innerHTML = '<span class="spinner"></span>Menarik review…';
+  setStatus('Kabel sedang ditarik — mengambil review dari Play Store…');
+  showSkeleton();
+  state.openFile = null;
+  document.querySelectorAll('.archive-item').forEach(r=>r.classList.remove('active'));
+
   try{
     const res = await fetch('/api/scrape', {
       method:'POST',
@@ -464,16 +583,40 @@ async function runScrape(){
       body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if(data.error){ setStatus('Error: ' + data.error, 'err'); return; }
-    setStatus(`Filed ${data.stats.total} reviews → ${data.meta.filename}`, 'ok');
+    if(data.error){
+      setStatus('Gagal: ' + data.error, 'err');
+      toast(data.error, 'err');
+      renderPlaceholder('Scrape tidak berhasil', data.error);
+      return;
+    }
     state.current = data;
+    if(data.saved){
+      setStatus(`Tersimpan ${data.stats.total} review → ${data.meta.filename}`, 'ok');
+      localStorage.setItem('psr.lastAppId', app_id);
+      localStorage.setItem('psr.lastCount', String(count));
+      loadArchive();
+    }else{
+      setStatus('Tidak ada review yang didapat.', 'err');
+    }
     renderResults(data);
-    loadArchive();
+    if(data.warnings && data.warnings.length) toast(data.warnings[0], data.saved ? '' : 'err');
   }catch(e){
-    setStatus('Network error talking to the local server.', 'err');
+    setStatus('Gagal menghubungi server lokal.', 'err');
+    renderPlaceholder('Server tidak merespons', 'Pastikan app.py masih berjalan di port 5000.');
   }finally{
+    state.loading = false;
     btn.disabled = false;
+    btn.textContent = 'Jalankan scrape';
   }
+}
+
+function renderPlaceholder(title, detail){
+  $('#resultsArea').innerHTML = `
+    <div class="empty-state">
+      <div class="glyph">☐</div>
+      <div class="t1">${escapeHtml(title)}</div>
+      <div class="t2">${escapeHtml(detail)}</div>
+    </div>`;
 }
 
 // ---- archive ----
@@ -484,132 +627,183 @@ async function loadArchive(){
     state.archive = list;
     const box = $('#archiveList');
     $('#archiveCount').textContent = list.length ? `(${list.length})` : '';
-    if(!list.length){ box.innerHTML = '<div class="archive-empty">No saved reviews yet.</div>'; return; }
+    if(!list.length){ box.innerHTML = '<div class="archive-empty">Belum ada hasil tersimpan.</div>'; return; }
     box.innerHTML = '';
     list.forEach(item=>{
       const row = document.createElement('div');
-      row.className = 'archive-item';
-      const starsTag = item.meta.starsFilter === 'all' ? 'all stars' : '★' + (Array.isArray(item.meta.starsFilter) ? item.meta.starsFilter.join(',★') : item.meta.starsFilter);
+      row.className = 'archive-item' + (item.filename === state.openFile ? ' active' : '');
+      const stars = item.meta.starsFilter;
+      const starsTag = !stars || stars === 'all'
+        ? 'semua bintang'
+        : '★' + (Array.isArray(stars) ? stars.join(',★') : stars);
       row.innerHTML = `
         <div class="meta">
-          <div class="app">${item.meta.appId}</div>
-          <div class="sub">${item.stats.total} reviews · ${starsTag} · avg ${item.stats.average ?? '—'} · ${new Date(item.meta.scrapedAt).toLocaleString()}</div>
+          <div class="app">${escapeHtml(item.meta.appId)}</div>
+          <div class="sub">${item.stats.total ?? 0} review · ${escapeHtml(starsTag)} · rata-rata ${item.stats.average ?? '—'} · ${new Date(item.meta.scrapedAt).toLocaleString('id-ID')}</div>
         </div>
-        <button class="del" title="Delete this file">✕</button>`;
+        <button class="del" title="Hapus file ini" aria-label="Hapus file ini">✕</button>`;
       row.addEventListener('click', (e)=>{
         if(e.target.classList.contains('del')) return;
-        openSaved(item.filename, row);
+        openSaved(item.filename);
       });
       row.querySelector('.del').addEventListener('click', async (e)=>{
         e.stopPropagation();
-        if(!confirm('Delete this saved dispatch?')) return;
+        if(!confirm('Hapus hasil scrape ini?')) return;
         await fetch('/api/saved/' + encodeURIComponent(item.filename), { method:'DELETE' });
+        if(state.openFile === item.filename){ state.openFile = null; state.current = null; }
         loadArchive();
+        toast('File dihapus.');
       });
       box.appendChild(row);
     });
   }catch(e){
-    $('#archiveList').innerHTML = '<div class="archive-empty">Could not reach local server.</div>';
+    $('#archiveList').innerHTML = '<div class="archive-empty">Tidak bisa menghubungi server lokal.</div>';
   }
 }
 
-async function openSaved(filename, rowEl){
+async function openSaved(filename){
+  state.openFile = filename;
   document.querySelectorAll('.archive-item').forEach(r=>r.classList.remove('active'));
-  if(rowEl) rowEl.classList.add('active');
-  const res = await fetch('/api/saved/' + encodeURIComponent(filename));
-  const data = await res.json();
-  state.current = data;
-  renderResults(data);
+  setStatus('Membuka ' + filename + '…');
+  try{
+    const res = await fetch('/api/saved/' + encodeURIComponent(filename));
+    const data = await res.json();
+    if(data.error){ setStatus(data.error, 'err'); return; }
+    state.current = data;
+    state.filterText = '';
+    state.filterStar = '';
+    renderResults(data);
+    loadArchive();
+    setStatus('');
+  }catch(e){
+    setStatus('Gagal membuka file.', 'err');
+  }
 }
 
 // ---- rendering ----
-let filterText = '';
-let filterStar = '';
-
 function renderResults(data){
   const area = $('#resultsArea');
   const { meta, stats, reviews: rv } = data;
 
-  const distMax = Math.max(1, ...Object.values(stats.distribution));
+  if(!rv.length){
+    const list = (data.warnings || []).map(w=>`<li>${escapeHtml(w)}</li>`).join('');
+    renderPlaceholder('Tidak ada review', 'Filter mungkin terlalu sempit. Coba longgarkan pilihan bintang atau tambah jumlah.');
+    if(list) area.insertAdjacentHTML('afterbegin', `<div class="warn-box">Tidak ada data tersimpan.<ul>${list}</ul></div>`);
+    return;
+  }
+
+  const total = stats.total || rv.length;
   const distHtml = [5,4,3,2,1].map(s=>{
     const c = stats.distribution[s] || 0;
-    const pct = Math.round((c/distMax)*100);
+    const pct = total ? Math.round((c / total) * 100) : 0;
     return `<div class="dist-row">
       <div class="star-lbl">★${s}</div>
       <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-      <div class="count">${c}</div>
+      <div class="count">${c} · ${pct}%</div>
     </div>`;
   }).join('');
 
+  const warnHtml = (data.warnings && data.warnings.length)
+    ? `<div class="warn-box"><strong>Catatan</strong><ul>${data.warnings.map(w=>`<li>${escapeHtml(w)}</li>`).join('')}</ul></div>`
+    : '';
+
+  const starsTag = !meta.starsFilter || meta.starsFilter === 'all'
+    ? 'semua bintang'
+    : '★' + (Array.isArray(meta.starsFilter) ? meta.starsFilter.join(',★') : meta.starsFilter);
+
+  const unsaved = !meta.filename;
+
   area.innerHTML = `
     <div class="headline-block">
-      <h2>${meta.appId}</h2>
-      <div class="deck">${stats.total} reviews filed · sorted ${meta.sort} · ${meta.lang}/${meta.country} · pulled ${new Date(meta.scrapedAt).toLocaleString()}</div>
+      <h2>${escapeHtml(meta.appId)}</h2>
+      <div class="deck">${total} review · ${escapeHtml(starsTag)} · urut ${escapeHtml(meta.sort)} · ${escapeHtml(meta.lang)}/${escapeHtml(meta.country)} · diambil ${new Date(meta.scrapedAt).toLocaleString('id-ID')}${unsaved ? ' · <strong>belum tersimpan</strong>' : ''}</div>
     </div>
 
+    ${warnHtml}
+
     <div class="stat-row">
-      <div class="stat-cell"><div class="num">${stats.total}</div><div class="lbl">Reviews</div></div>
-      <div class="stat-cell"><div class="num">${stats.average ?? '—'}</div><div class="lbl">Avg. rating</div></div>
-      <div class="stat-cell"><div class="num">${stats.distribution[5] || 0}</div><div class="lbl">5-star count</div></div>
+      <div class="stat-cell"><div class="num">${total}</div><div class="lbl">Review</div></div>
+      <div class="stat-cell"><div class="num">${stats.average ?? '—'}</div><div class="lbl">Rata-rata</div></div>
+      <div class="stat-cell"><div class="num">${stats.distribution[5] || 0}</div><div class="lbl">Bintang 5</div></div>
     </div>
 
     <div class="dist-bars">${distHtml}</div>
 
     <div class="toolbar">
-      <input type="text" id="searchBox" placeholder="Search review text or username…" />
-      <select id="starFilter">
-        <option value="">All stars</option>
-        <option value="5">★5 only</option>
-        <option value="4">★4 only</option>
-        <option value="3">★3 only</option>
-        <option value="2">★2 only</option>
-        <option value="1">★1 only</option>
+      <input type="text" id="searchBox" placeholder="Cari teks review atau nama pengguna…" />
+      <select id="starFilter" aria-label="Filter bintang">
+        <option value="">Semua bintang</option>
+        <option value="5">★5 saja</option>
+        <option value="4">★4 saja</option>
+        <option value="3">★3 saja</option>
+        <option value="2">★2 saja</option>
+        <option value="1">★1 saja</option>
       </select>
-      <button class="ghost" id="downloadBtn">Download JSON</button>
+      <button class="ghost" id="downloadCsvBtn">↓ CSV</button>
+      <button class="ghost" id="downloadFilteredBtn">↓ CSV terfilter</button>
+      <button class="ghost" id="downloadJsonBtn">↓ JSON</button>
     </div>
 
+    <div class="filter-count" id="filterCount"></div>
     <div id="reviewList"></div>
   `;
 
-  $('#searchBox').addEventListener('input', (e)=>{ filterText = e.target.value.toLowerCase(); renderList(rv); });
-  $('#starFilter').addEventListener('change', (e)=>{ filterStar = e.target.value; renderList(rv); });
-  $('#downloadBtn').addEventListener('click', ()=> downloadJSON(data));
+  $('#searchBox').value = state.filterText;
+  $('#starFilter').value = state.filterStar;
+  $('#searchBox').addEventListener('input', (e)=>{ state.filterText = e.target.value.toLowerCase(); renderList(rv); });
+  $('#starFilter').addEventListener('change', (e)=>{ state.filterStar = e.target.value; renderList(rv); });
+  $('#downloadCsvBtn').addEventListener('click', ()=> downloadCsv(meta.filename, rv));
+  $('#downloadFilteredBtn').addEventListener('click', ()=> downloadCsv(null, state.filtered));
+  $('#downloadJsonBtn').addEventListener('click', ()=> downloadJSON(data));
 
   renderList(rv);
 }
 
-function renderList(rv){
-  const list = $('#reviewList');
-  const filtered = rv.filter(r=>{
-    if(filterStar && String(r.score) !== filterStar) return false;
-    if(filterText){
-      const hay = (r.content||'').toLowerCase() + ' ' + (r.userName||'').toLowerCase();
-      if(!hay.includes(filterText)) return false;
+function currentFiltered(rv){
+  return rv.filter(r=>{
+    if(state.filterStar && String(r.score) !== state.filterStar) return false;
+    if(state.filterText){
+      const hay = (r.content || '').toLowerCase() + ' ' + (r.userName || '').toLowerCase();
+      if(!hay.includes(state.filterText)) return false;
     }
     return true;
   });
+}
+
+function renderList(rv){
+  const list = $('#reviewList');
+  const filtered = currentFiltered(rv);
+  state.filtered = filtered;
+
+  const counter = $('#filterCount');
+  const isFiltered = state.filterText || state.filterStar;
+  counter.textContent = isFiltered ? `Menampilkan ${filtered.length} dari ${rv.length} review` : `${rv.length} review`;
+
+  $('#downloadFilteredBtn').disabled = !filtered.length;
 
   if(!filtered.length){
-    list.innerHTML = `<div class="empty-state"><div class="glyph">☐</div><div class="t1">No matching reviews</div><div class="t2">Try clearing the search or star filter.</div></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="glyph">☐</div><div class="t1">Tidak ada yang cocok</div><div class="t2">Coba hapus kata kunci atau filter bintang.</div></div>`;
     return;
   }
 
   list.innerHTML = filtered.map(r=>{
-    const stars = '★'.repeat(r.score||0) + '☆'.repeat(5-(r.score||0));
-    const reply = r.replyContent ? `<div class="reply-box"><span class="tag">Developer reply</span>${escapeHtml(r.replyContent)}</div>` : '';
+    const score = r.score || 0;
+    const stars = '★'.repeat(score) + '☆'.repeat(5 - score);
+    const reply = r.replyContent ? `<div class="reply-box"><span class="tag">Balasan developer</span>${escapeHtml(r.replyContent)}</div>` : '';
     const img = r.userImage || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="38" height="38"><rect width="38" height="38" fill="%23f1eee6"/></svg>';
     return `<div class="review-card">
-      <img src="${img}" alt="">
+      <img src="${escapeHtml(img)}" alt="" loading="lazy">
       <div>
         <div class="review-head">
-          <span class="who">${escapeHtml(r.userName || 'Anonymous')}</span>
-          <span class="when">${r.at ? new Date(r.at).toLocaleDateString() : ''}</span>
+          <span class="who">${escapeHtml(r.userName || 'Anonim')}</span>
+          <span class="when">${r.at ? new Date(r.at).toLocaleDateString('id-ID') : ''}</span>
         </div>
         <div class="stars">${stars}</div>
         <div class="review-body">${escapeHtml(r.content || '')}</div>
         <div class="review-foot">
           <span>👍 ${r.thumbsUpCount ?? 0}</span>
-          ${r.appVersion ? `<span>v${r.appVersion}</span>` : ''}
+          ${r.appVersion ? `<span>v${escapeHtml(r.appVersion)}</span>` : ''}
+          ${r.reviewCreatedVersion && r.reviewCreatedVersion !== r.appVersion ? `<span>dibuat di v${escapeHtml(r.reviewCreatedVersion)}</span>` : ''}
         </div>
         ${reply}
       </div>
@@ -617,25 +811,55 @@ function renderList(rv){
   }).join('');
 }
 
-function escapeHtml(str){
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
+// ---- downloads ----
 function downloadJSON(data){
   const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const name = (data.meta && data.meta.filename) || 'reviews.json';
+  triggerDownload(blob, name);
+}
+
+async function downloadCsv(filename, rows){
+  if(filename){
+    window.location.href = `/api/saved/${encodeURIComponent(filename)}/export?format=csv`;
+    return;
+  }
+  downloadCsvClient(rows || []);
+}
+
+function csvCell(value){
+  const s = value == null ? '' : String(value);
+  return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+function downloadCsvClient(rows){
+  if(!rows.length){ toast('Tidak ada baris untuk diekspor.', 'err'); return; }
+  const lines = [CSV_COLUMNS.join(',')];
+  rows.forEach(r=> lines.push(CSV_COLUMNS.map(c=> csvCell(r[c])).join(',')));
+  const blob = new Blob(['\ufeff' + lines.join('\r\n') + '\r\n'], { type:'text/csv;charset=utf-8' });
+  const meta = state.current && state.current.meta;
+  const base = (meta && meta.filename ? meta.filename.replace(/\.json$/,'') : 'reviews') + (state.filterText || state.filterStar ? '-filtered' : '');
+  triggerDownload(blob, base + '.csv');
+  toast(`CSV dibuat (${rows.length} baris).`);
+}
+
+function triggerDownload(blob, name){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = data.meta.filename || 'reviews.json';
+  a.download = name;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
 }
 
-// init
-loadArchive();
-loadAppPreview();
+// ---- init ----
+(function init(){
+  const savedId = localStorage.getItem('psr.lastAppId');
+  const savedCount = localStorage.getItem('psr.lastCount');
+  if(savedId) $('#appId').value = savedId;
+  if(savedCount) $('#count').value = savedCount;
+  loadArchive();
+  loadAppPreview();
+})();
 </script>
 </body>
 </html>
