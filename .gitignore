@@ -3,10 +3,18 @@ appreviewvenv/
 venv/
 .venv/
 
+# Scrape results (kept on disk, never committed)
+data/*.json
+!data/.gitkeep
+
 # Python cache
 __pycache__/
 *.py[cod]
 *.pyo
+.pytest_cache/
+
+# Logs
+*.log
 
 # Jupyter
 .ipynb_checkpoints/
